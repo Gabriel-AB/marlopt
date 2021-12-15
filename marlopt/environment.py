@@ -35,16 +35,22 @@ class OptFuncParallelEnv(ParallelEnv):
     self.possible_agents = [f'agent_{i}' for i in range(num_agents)]
     self.max_steps = max_steps
     
-    self.obs_space = Box(-np.inf, np.inf, (2*dims + 1,), dtype=float)
-    self.act_space = Box(-np.inf, np.inf, (dims,), float)
+    self.observation_spaces = {
+      agent: Box(-np.inf, np.inf, (2*dims + 1,), dtype=float)
+      for agent in self.possible_agents
+    }
+    self.action_spaces = {
+      agent: Box(-np.inf, np.inf, (dims,), float)
+      for agent in self.possible_agents
+    }
     self.gen = tf.random.Generator.from_non_deterministic_state()
 
   
   def observation_space(self, agent):
-    return self.obs_space
+    return self.observation_spaces[agent]
 
   def action_space(self, agent):
-    return self.act_space
+    return self.action_spaces[agent]
   
   def update_observations(self, actions):
     best_agent = max(self.rewards)
