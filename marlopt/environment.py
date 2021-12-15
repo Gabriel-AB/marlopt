@@ -69,18 +69,27 @@ class OptFuncParallelEnv(ParallelEnv):
 
   def reset(self):
     self.agents = self.possible_agents[:]
-    self.rewards = {agent: tf.constant(0, tf.float64) for agent in self.agents}
+    self.rewards = {agent: 0.0 for agent in self.agents}
     self._cumulative_rewards = {agent: 0 for agent in self.agents}
     self.dones = {agent: False for agent in self.agents}
     self.infos = {agent: {} for agent in self.agents}
     self.states = {
-      agent: self.gen.uniform((self.dims,), *self.func.domain, name=agent)
-      for agent in self.agents
+      agent: self.gen.uniform(
+        (self.dims,), 
+        *self.func.domain,
+        dtype=tf.float64,
+        name=agent
+      ) for agent in self.agents
     }
 
     # Observation
     self.observations = {agent: None for agent in self.agents}
-    actions = {agent: tf.zeros((self.dims,)) for agent in self.agents}
+    actions = {
+      agent: tf.zeros(
+        (self.dims,),
+        dtype=tf.float64,
+      ) for agent in self.agents
+    }
 
     self.update_observations(actions)
     self.num_moves = 0
