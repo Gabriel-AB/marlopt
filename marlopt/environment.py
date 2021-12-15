@@ -81,7 +81,7 @@ class OptFuncParallelEnv(ParallelEnv):
     return self.observations
 
 
-  def step(self, actions: dict[str, tf.Tensor]):
+  def step(self, actions):
     
     if not actions:
       return {}, {}, {}, {}
