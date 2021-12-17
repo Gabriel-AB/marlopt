@@ -23,7 +23,7 @@ from mava.components.tf import architectures
 from mava.utils.loggers import logger_utils
 
 # %% Importing Optimization environment
-import marlopt.environment as optenvs
+from marlopt.environments import optfunc_v0
 import optfuncs.tensorflow_functions as tff
 from mava.wrappers.pettingzoo import PettingZooParallelEnvWrapper
 
@@ -34,12 +34,13 @@ env_name = "Sphere" # @param ["Sphere", "Ackley", "Levy", "Rosenbrock"]
 dims = 2 # @param {type: 'integer'}
 num_agents = 1 # @param {type: 'integer'}
 
+
+
 def make_environment(env_name: str, dims: int, num_agents: int, *args, **kwargs):
-  function = getattr(tff, env_name)()
-  env = optenvs.OptFuncParallelEnv(function, 
-                           dims=dims, 
-                           num_agents=num_agents)
-  return PettingZooParallelEnvWrapper(env)
+    function = getattr(tff, env_name)()
+    env = optfunc_v0.parallel_env(function, dims=dims, num_agents=num_agents)
+    env = PettingZooParallelEnvWrapper(env)
+    return env
 
 
 environment_factory = functools.partial(

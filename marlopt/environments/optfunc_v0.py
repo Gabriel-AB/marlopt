@@ -1,17 +1,41 @@
-from optfuncs.core import Function
+from optfuncs import core
 from pettingzoo import ParallelEnv
+from pettingzoo.utils import wrappers
+from pettingzoo.utils import from_parallel
 from gym.spaces import Box
 import numpy as np
 
+class DummyFunction(core.Function):
+  def __init__(self, domain = core.Domain(-1.0, 1.0)):
+      super().__init__(domain)
+  def __call__(self, x):
+      return sum(x)
 
-class OptFuncParallelEnv(ParallelEnv):
+def env():
+    env = raw_env()
+    # This wrapper is only for environments which print results to the terminal
+    env = wrappers.CaptureStdoutWrapper(env)
+    # this wrapper helps error handling for discrete action spaces
+    env = wrappers.AssertOutOfBoundsWrapper(env)
+    # Provides a wide vareity of helpful user errors
+    env = wrappers.OrderEnforcingWrapper(env)
+    return env
+
+
+def raw_env():
+    env = parallel_env(DummyFunction(), 2, 3)
+    env = from_parallel(env)
+    return env
+
+
+class parallel_env(ParallelEnv):
   """
-  Parallel Environment for Global Optimization
+  Environment for Global Optimization with Partial Observability
 
-  Simulates agents trying to optimize a optimization function
+  Simulates agents trying to optimize a mathematical optimization function
 
   This env is partially observable and make uses the following 
-  observations for each agent:
+  observation structure for each agent:
     (agent_action)
     (best_agent_reward - agent_reward)
     (best_agent_state - agent_state)
@@ -20,10 +44,10 @@ class OptFuncParallelEnv(ParallelEnv):
   metadata = {'render.modes': ['human'], 'name': 'OptFuncParallelEnv'}
 
   def __init__(self,
-               function: Function,
-               dims: int,
-               num_agents: int,
-               max_steps: int = 3000):
+               function: core.Function = DummyFunction(),
+               dims: int = 2,
+               num_agents: int = 3,
+               max_steps: int = 256):
     """
     function: An optimization function
     dims: Dimentions of optimization

@@ -1,1 +1,1 @@
-"""Multi agent Reinforcement Learning Environment"""
+"""Multi agent Reinforcement Learning Environments for Global Optimization"""
