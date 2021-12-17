@@ -6,7 +6,6 @@ setup(
     author='Gabriel-AB',
     packages=['marlopt'],
     install_requires=[
-        'id-mava[tf,reverb,launchpad] @ git+https://github.com/instadeepai/Mava',
         'optfuncs @ git+https://github.com/Gabriel-AB/optfuncs@packaging',
         'pettingzoo',
         'supersuit',

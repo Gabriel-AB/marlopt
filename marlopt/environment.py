@@ -2,7 +2,6 @@ from optfuncs.core import Function
 from pettingzoo import ParallelEnv
 from gym.spaces import Box
 import numpy as np
-import tensorflow as tf
 
 
 class OptFuncParallelEnv(ParallelEnv):
@@ -35,16 +34,17 @@ class OptFuncParallelEnv(ParallelEnv):
     self.possible_agents = [f'agent_{i}' for i in range(num_agents)]
     self.max_steps = max_steps
     
+    lower_bound = np.array(2*dims*[function.domain.min] + [-np.inf])
+    upper_bound = np.array(2*dims*[function.domain.max] + [ np.inf])
+
     self.observation_spaces = {
-      agent: Box(-np.inf, np.inf, (2*dims + 1,), dtype=float)
+      agent: Box(lower_bound, upper_bound, (2*dims + 1,), dtype=np.float32)
       for agent in self.possible_agents
     }
     self.action_spaces = {
-      agent: Box(-np.inf, np.inf, (dims,), float)
+      agent: Box(-np.inf, np.inf, (dims,), np.float32)
       for agent in self.possible_agents
     }
-    self.gen = tf.random.Generator.from_non_deterministic_state()
-
   
   def observation_space(self, agent):
     return self.observation_spaces[agent]
@@ -62,11 +62,8 @@ class OptFuncParallelEnv(ParallelEnv):
         self.states[best_agent] - self.states[agent]
       ]
       
-      self.observations[agent] = tf.concat(concat, axis=0)
+      self.observations[agent] = np.concatenate(concat, axis=0, dtype=np.float32)
   
-  def seed(self, seed):
-    self.gen.reset_from_seed(seed)
-
   def reset(self):
     self.agents = self.possible_agents[:]
     self.rewards = {agent: 0.0 for agent in self.agents}
@@ -74,21 +71,13 @@ class OptFuncParallelEnv(ParallelEnv):
     self.dones = {agent: False for agent in self.agents}
     self.infos = {agent: {} for agent in self.agents}
     self.states = {
-      agent: self.gen.uniform(
-        (self.dims,), 
-        *self.func.domain,
-        dtype=tf.float64,
-        name=agent
-      ) for agent in self.agents
+      agent: np.random.uniform(*self.func.domain, (self.dims,)) for agent in self.agents
     }
 
     # Observation
     self.observations = {agent: None for agent in self.agents}
     actions = {
-      agent: tf.zeros(
-        (self.dims,),
-        dtype=tf.float64,
-      ) for agent in self.agents
+      agent: box.sample() for agent, box in self.action_spaces.items()
     }
 
     self.update_observations(actions)
