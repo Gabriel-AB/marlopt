@@ -53,29 +53,29 @@ class OptFuncParallelEnv(ParallelEnv):
     return self.action_spaces[agent]
   
   def update_observations(self, actions):
-    best_agent = max(self.rewards)
+    best_agent = max(self.rewards, key=self.rewards.get)
 
-    for agent in self.observations:
+    for agent in self.agents:
       concat = [
         actions[agent],
+        self.states[best_agent] - self.states[agent],
         [self.rewards[best_agent] - self.rewards[agent]],
-        self.states[best_agent] - self.states[agent]
       ]
-      
       self.observations[agent] = np.concatenate(concat, axis=0, dtype=np.float32)
   
   def reset(self):
     self.agents = self.possible_agents[:]
-    self.rewards = {agent: 0.0 for agent in self.agents}
     self._cumulative_rewards = {agent: 0 for agent in self.agents}
     self.dones = {agent: False for agent in self.agents}
     self.infos = {agent: {} for agent in self.agents}
     self.states = {
-      agent: np.random.uniform(*self.func.domain, (self.dims,)) for agent in self.agents
+      agent: np.random.uniform(*self.func.domain, (self.dims,)).astype(np.float32)
+      for agent in self.agents
     }
 
     # Observation
-    self.observations = {agent: None for agent in self.agents}
+    self.rewards = {agent: -self.func(self.states[agent]) for agent in self.agents}
+    self.observations = {}
     actions = {
       agent: box.sample() for agent, box in self.action_spaces.items()
     }
